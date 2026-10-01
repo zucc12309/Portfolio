@@ -2,16 +2,43 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ==========================================================================
+   PRIYANSHU OS — design tokens
+   8px spacing rhythm, one phosphor accent, amber for emphasis, purple sparingly.
+   ========================================================================== */
+
 :root {
   color-scheme: dark;
+  --phosphor: 139 231 139;
   --bg: #0B0F14;
   --surface: #151A21;
-  --retro-green: #8BE78B;
+  --surface-2: #10151B;
+  --retro-green: rgb(var(--phosphor));
   --retro-amber: #F5B14C;
   --accent-purple: #A970FF;
   --text: #F5F1E8;
-  --text-dim: rgba(245, 241, 232, 0.55);
-  --border: rgba(245, 241, 232, 0.15);
+  --text-dim: rgba(245, 241, 232, 0.68);
+  --border: rgba(245, 241, 232, 0.14);
+  --border-strong: rgba(245, 241, 232, 0.26);
+  --bevel-light: rgba(255, 255, 255, 0.07);
+  --bevel-dark: rgba(0, 0, 0, 0.55);
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --menubar-h: 44px;
+  --dock-h: 60px;
+  --taskbar-h: 44px;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --menubar-h: 32px;
+  }
+}
+
+html[data-phosphor="amber"] {
+  --phosphor: 245 177 76;
 }
 
 * {
@@ -20,139 +47,675 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--bg);
   color: var(--text);
   font-variant-ligatures: none;
+  overflow-x: hidden;
 }
 
 ::selection {
-  background: rgba(139, 231, 139, 0.28);
+  background: rgb(var(--phosphor) / 0.3);
+  color: #fff;
 }
 
-/* Scanline overlay */
-.retro-scanlines::before {
-  content: "";
+:where(:focus-visible) {
+  outline: 2px solid rgb(var(--phosphor));
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: fixed;
+  left: 8px;
+  top: calc(var(--safe-top) + 8px);
+  z-index: 200;
+  transform: translateY(-200%);
+  border: 1px solid rgb(var(--phosphor));
+  background: var(--bg);
+  padding: 8px 16px;
+  color: rgb(var(--phosphor));
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.skip-link:focus {
+  transform: none;
+}
+
+/* ==========================================================================
+   CRT layer — scanlines, static noise and vignette. Purely decorative,
+   pointer-events none, no blend modes (cheap to composite).
+   ========================================================================== */
+
+.crt-overlay {
   position: fixed;
   inset: 0;
-  z-index: 70;
+  z-index: 90;
   pointer-events: none;
+}
+
+.crt-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.16) 0 1px, transparent 1px 3px);
+  opacity: 0.55;
+}
+
+.crt-overlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
   background:
-    linear-gradient(rgba(255, 255, 255, 0.02) 50%, rgba(0, 0, 0, 0.08) 50%),
-    linear-gradient(90deg, rgba(139, 231, 139, 0.015), rgba(245, 177, 76, 0.01), rgba(169, 112, 255, 0.015));
-  background-size: 100% 3px, 6px 100%;
-  mix-blend-mode: screen;
-  opacity: 0.32;
+    radial-gradient(ellipse at center, transparent 62%, rgba(0, 0, 0, 0.38) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+  opacity: 0.06;
 }
 
-.retro-scanlines::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 69;
-  pointer-events: none;
-  background: radial-gradient(circle at center, transparent 60%, rgba(0, 0, 0, 0.35) 100%);
+html[data-crt="off"] .crt-overlay {
+  display: none;
 }
 
-/* Window chrome */
+@media (max-width: 1023px) {
+  .crt-overlay::before {
+    opacity: 0.3;
+  }
+  .crt-overlay::after {
+    background: radial-gradient(ellipse at center, transparent 70%, rgba(0, 0, 0, 0.3) 100%);
+    opacity: 1;
+  }
+}
+
+/* Legacy alias kept for pages that still opt in via class. */
+.retro-scanlines {
+  position: relative;
+}
+
+/* ==========================================================================
+   Window chrome
+   ========================================================================== */
+
+.os-window,
 .retro-window {
-  border: 1px solid var(--border);
-  background:
-    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
-    var(--surface);
-  background-size: 20px 20px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
   box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
-    0 20px 60px rgba(0, 0, 0, 0.5),
-    0 0 30px rgba(169, 112, 255, 0.06);
+    inset 1px 1px 0 var(--bevel-light),
+    0 0 0 1px rgba(0, 0, 0, 0.6),
+    4px 4px 0 0 rgba(0, 0, 0, 0.5),
+    0 24px 48px -16px rgba(0, 0, 0, 0.7);
 }
 
+.os-titlebar,
 .retro-titlebar {
-  border-bottom: 1px solid var(--border);
-  background: linear-gradient(90deg, #0d1117, #151A21 48%, #0d1117);
-  color: var(--retro-green);
-  text-shadow: 0 0 8px rgba(139, 231, 139, 0.3);
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--border-strong);
+  background: linear-gradient(180deg, #1b222b, #12171e);
+  color: rgb(var(--phosphor));
+  user-select: none;
 }
 
-/* Buttons */
-.retro-button {
-  border: 1px solid var(--border);
+/* Classic-Mac pinstripes fill the empty part of an active title bar. */
+.os-titlebar-stripes {
+  flex: 1;
+  height: 10px;
+  min-width: 16px;
+  background: repeating-linear-gradient(to bottom, rgba(245, 241, 232, 0.13) 0 1px, transparent 1px 3px);
+}
+
+.os-title {
+  font-family: var(--font-pixel), var(--font-geist-mono), monospace;
+  font-size: 17px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.os-control {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: rgba(245, 241, 232, 0.75);
+  box-shadow: inset 1px 1px 0 var(--bevel-light), 1px 1px 0 var(--bevel-dark);
+  transition: background-color 120ms var(--ease-out), color 120ms var(--ease-out);
+}
+
+.os-control:hover {
+  background: rgb(var(--phosphor) / 0.14);
+  color: #fff;
+}
+
+.os-control[data-variant="close"]:hover {
+  background: rgba(248, 113, 113, 0.22);
+}
+
+.os-control:active {
+  transform: translate(1px, 1px);
+  box-shadow: inset 1px 1px 0 var(--bevel-dark);
+}
+
+/* Window lifecycle */
+.os-window-anim {
+  /* backwards fill: releases transform after opening so minimize can animate */
+  animation: win-open 200ms var(--ease-out) backwards;
+}
+
+.os-window[data-state="minimized"] {
+  transform: translateY(32%) scale(0.6);
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transition:
+    transform 220ms var(--ease-out),
+    opacity 180ms linear,
+    visibility 0s linear 220ms;
+}
+
+.os-window[data-state="normal"],
+.os-window[data-state="maximized"] {
+  transition:
+    transform 220ms var(--ease-out),
+    opacity 160ms linear;
+}
+
+@keyframes win-open {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.reveal {
+  animation: fade-up 280ms var(--ease-out) both;
+}
+
+.fade-in {
+  animation: fade-in 160ms linear both;
+}
+
+/* ==========================================================================
+   Controls
+   ========================================================================== */
+
+.retro-button,
+.os-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--border-strong);
   background: var(--surface);
   color: var(--text);
-  transition: all 0.15s ease;
+  box-shadow: inset 1px 1px 0 var(--bevel-light), 2px 2px 0 var(--bevel-dark);
+  transition:
+    background-color 120ms var(--ease-out),
+    border-color 120ms var(--ease-out),
+    color 120ms var(--ease-out);
+  -webkit-tap-highlight-color: transparent;
 }
 
-.retro-button:hover {
-  border-color: var(--retro-green);
-  background: rgba(139, 231, 139, 0.08);
-  color: white;
+.retro-button:hover,
+.os-btn:hover {
+  border-color: rgb(var(--phosphor) / 0.7);
+  background: rgb(var(--phosphor) / 0.08);
+  color: #fff;
 }
 
-/* Terminal text */
+.retro-button:active,
+.os-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: inset 1px 1px 0 var(--bevel-dark);
+}
+
+.os-btn-primary {
+  border-color: rgb(var(--phosphor) / 0.65);
+  background: rgb(var(--phosphor) / 0.12);
+  color: rgb(var(--phosphor));
+}
+
+.os-btn-primary:hover {
+  background: rgb(var(--phosphor) / 0.2);
+  color: rgb(var(--phosphor));
+}
+
+.os-btn:disabled,
+.os-btn[aria-disabled="true"] {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.os-input {
+  border: 1px solid var(--border-strong);
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--text);
+  box-shadow: inset 1px 1px 0 var(--bevel-dark);
+  outline: none;
+  transition: border-color 120ms var(--ease-out);
+}
+
+.os-input::placeholder {
+  color: rgba(245, 241, 232, 0.45);
+}
+
+.os-input:focus {
+  border-color: rgb(var(--phosphor) / 0.7);
+}
+
+/* Small uppercase kicker label */
+.os-label {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgb(var(--phosphor));
+}
+
+.os-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 8px;
+  font-size: 11px;
+  line-height: 18px;
+  color: rgba(245, 241, 232, 0.78);
+}
+
+/* Recessed panel (inset bevel) */
+.retro-panel,
+.os-panel {
+  border: 1px solid var(--border);
+  background: rgba(11, 15, 20, 0.6);
+  box-shadow: inset 1px 1px 0 var(--bevel-dark), inset -1px -1px 0 var(--bevel-light);
+}
+
 .retro-terminal {
-  color: var(--retro-green);
-  text-shadow: 0 0 8px rgba(139, 231, 139, 0.3);
+  color: rgb(var(--phosphor));
 }
 
-/* Heading */
 .pixel-heading {
   color: var(--text);
-  text-shadow: 2px 0 0 rgba(169, 112, 255, 0.4), 0 0 20px rgba(169, 112, 255, 0.15);
 }
 
-/* Panel */
-.retro-panel {
-  border: 1px solid var(--border);
-  background: rgba(11, 15, 20, 0.7);
-}
-
-/* Progress bar */
 .retro-progress {
-  background-image: repeating-linear-gradient(90deg, var(--retro-green) 0 8px, transparent 8px 11px);
+  background-image: repeating-linear-gradient(90deg, rgb(var(--phosphor)) 0 8px, transparent 8px 11px);
 }
 
-/* Taskbar */
-.retro-taskbar {
-  border-top: 1px solid rgba(139, 231, 139, 0.25);
-  background: linear-gradient(var(--surface), #0d1117);
+/* Tooltips: [data-tip] shows on hover (fine pointers) and keyboard focus. */
+[data-tip] {
+  position: relative;
+}
+
+[data-tip]::after {
+  content: attr(data-tip);
+  /* Empty alt text keeps the tooltip out of the element's accessible name. */
+  content: attr(data-tip) / "";
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  z-index: 60;
+  transform: translate(-50%, 4px);
+  border: 1px solid var(--border-strong);
+  background: #0d1117;
+  padding: 4px 8px;
+  white-space: nowrap;
+  font-size: 11px;
+  line-height: 1.4;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text);
+  box-shadow: 2px 2px 0 var(--bevel-dark);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 120ms linear,
+    transform 120ms var(--ease-out);
+}
+
+[data-tip-pos="right"]::after {
+  left: calc(100% + 8px);
+  bottom: auto;
+  top: 50%;
+  transform: translate(-4px, -50%);
+}
+
+[data-tip-pos="bottom"]::after {
+  bottom: auto;
+  top: calc(100% + 8px);
+  transform: translate(-50%, -4px);
+}
+
+[data-tip-pos="bottom-end"]::after {
+  left: auto;
+  right: 0;
+  bottom: auto;
+  top: calc(100% + 8px);
+  transform: translateY(-4px);
+}
+
+[data-tip-pos="top-end"]::after {
+  left: auto;
+  right: 0;
+  transform: translateY(4px);
+}
+
+@media (hover: hover) {
+  [data-tip]:hover::after {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  [data-tip-pos="right"]:hover::after {
+    transform: translate(0, -50%);
+  }
+  [data-tip-pos="bottom-end"]:hover::after,
+  [data-tip-pos="top-end"]:hover::after {
+    transform: none;
+  }
+}
+
+[data-tip]:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+[data-tip-pos="right"]:focus-visible::after {
+  transform: translate(0, -50%);
+}
+
+[data-tip-pos="bottom-end"]:focus-visible::after,
+[data-tip-pos="top-end"]:focus-visible::after {
+  transform: none;
+}
+
+/* ==========================================================================
+   Shell layout
+   Mobile (< 1024px): document scrolls, window is a full-bleed panel,
+   menubar sticks to the top and the dock to the bottom (both safe-area aware).
+   Desktop: fixed viewport, the window body is the scroll container.
+   ========================================================================== */
+
+.os-menubar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  padding-top: var(--safe-top);
+  border-bottom: 1px solid var(--border-strong);
+  background: rgba(13, 17, 23, 0.96);
+}
+
+.os-menubar-inner {
+  height: var(--menubar-h);
+}
+
+.os-main-pad {
+  padding-bottom: calc(var(--dock-h) + var(--safe-bottom) + 16px);
+}
+
+.os-dock {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 40;
+  padding-bottom: var(--safe-bottom);
+  border-top: 1px solid var(--border-strong);
+  background: rgba(13, 17, 23, 0.97);
+}
+
+.os-dock-inner {
+  height: var(--dock-h);
+}
+
+@media (min-width: 1024px) {
+  .os-shell {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) var(--taskbar-h);
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  .os-main-pad {
+    padding-bottom: 0;
+  }
+
+  .os-window-body {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(245, 241, 232, 0.25) transparent;
+  }
+}
+
+.retro-taskbar,
+.os-taskbar {
+  border-top: 1px solid var(--border-strong);
+  background: linear-gradient(180deg, #1a2029, #0f141a);
+  box-shadow: inset 0 1px 0 var(--bevel-light);
   color: var(--text);
 }
 
-/* Boot screen */
+/* Floating windows (terminal): full-screen panel on mobile. */
+.os-float {
+  position: fixed;
+  z-index: 70;
+  left: 0;
+  right: 0;
+  top: calc(var(--safe-top) + var(--menubar-h));
+  bottom: calc(var(--dock-h) + var(--safe-bottom));
+}
+
+@media (min-width: 1024px) {
+  .os-float {
+    right: auto;
+    bottom: auto;
+  }
+}
+
+/* Main window on small screens: a full-bleed panel with a sticky title bar;
+   minimise / maximise only exist on the desktop layout. */
+@media (max-width: 1023px) {
+  .os-main-window .os-titlebar {
+    position: sticky;
+    top: calc(var(--safe-top) + var(--menubar-h));
+    z-index: 30;
+  }
+  .os-main-window [data-ctl="min"],
+  .os-main-window [data-ctl="max"] {
+    display: none;
+  }
+  .os-main-window[data-state="minimized"] {
+    transform: none;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+}
+
+@media (min-width: 1024px) {
+  .os-terminal-window {
+    top: 0;
+    left: 0;
+    width: min(600px, calc(100vw - 32px));
+    height: 400px;
+    transform: translate3d(var(--tx, calc(100vw - 632px)), var(--ty, calc(100vh - 476px)), 0);
+  }
+}
+
+/* Modal dialogs: full screen on mobile, centred window on desktop. */
+.os-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  background: rgba(5, 6, 10, 0.72);
+  animation: fade-in 140ms linear both;
+}
+
+.os-modal {
+  width: 100%;
+  max-height: 100%;
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+  animation: win-open 200ms var(--ease-out) both;
+}
+
+@media (min-width: 768px) {
+  .os-modal-backdrop {
+    align-items: flex-start;
+    padding: 8vh 24px 24px;
+  }
+
+  .os-modal {
+    padding: 0;
+    max-height: 84vh;
+  }
+}
+
+/* ==========================================================================
+   Boot screen (shown pre-hydration via html[data-boot])
+   ========================================================================== */
+
+.boot-overlay {
+  display: none;
+}
+
+html[data-boot="1"] .boot-overlay {
+  display: flex;
+}
+
+html[data-boot="1"] body {
+  overflow: hidden;
+}
+
+.boot-overlay[data-leaving="true"] {
+  opacity: 0;
+  transition: opacity 220ms linear;
+}
+
 .boot-screen {
   background: var(--bg);
 }
 
-.boot-cursor {
-  animation: blink 1s step-end infinite;
+.boot-cursor,
+.blink {
+  animation: blink 1.1s step-end infinite;
 }
 
 @keyframes blink {
-  50% { opacity: 0; }
+  50% {
+    opacity: 0;
+  }
 }
 
 .boot-progress {
-  background-image: repeating-linear-gradient(90deg, var(--retro-green) 0 6px, transparent 6px 9px);
-  transition: width 0.3s ease;
+  background-image: repeating-linear-gradient(90deg, rgb(var(--phosphor)) 0 6px, transparent 6px 9px);
+  transition: width 120ms linear;
 }
 
-/* Award badge glow */
+/* Status LED */
+.status-led {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: rgb(var(--phosphor));
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 0 6px rgb(var(--phosphor) / 0.6);
+  animation: led 2.4s step-end infinite;
+}
+
+@keyframes led {
+  0%,
+  88% {
+    opacity: 1;
+  }
+  89%,
+  94% {
+    opacity: 0.25;
+  }
+}
+
+/* Terminal output lines appear with a tiny stagger. */
+.term-line {
+  animation: fade-in 120ms linear both;
+}
+
+/* Award badge */
 .award-glow {
-  box-shadow: 0 0 20px rgba(245, 177, 76, 0.15), inset 0 0 20px rgba(245, 177, 76, 0.05);
+  box-shadow: inset 1px 1px 0 var(--bevel-light), 2px 2px 0 var(--bevel-dark);
 }
 
-/* Recruiter mode indicator */
 .recruiter-pulse {
   animation: pulse-green 2s ease-in-out infinite;
 }
 
 @keyframes pulse-green {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(139, 231, 139, 0.4); }
-  50% { box-shadow: 0 0 0 6px rgba(139, 231, 139, 0); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(var(--phosphor) / 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgb(var(--phosphor) / 0);
+  }
+}
+
+/* Pixel icons stay crisp at any size */
+.pixel-icon {
+  shape-rendering: crispEdges;
+  image-rendering: pixelated;
+}
+
+/* BSOD easter egg */
+.bsod {
+  background: #0000a8;
+  color: #f0f0f0;
+}
+
+.bsod-tag {
+  background: #a8a8a8;
+  color: #0000a8;
 }
 
 @media (prefers-reduced-motion: reduce) {

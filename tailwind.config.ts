@@ -7,7 +7,8 @@ const config: Config = {
       colors: {
         bg: "#0B0F14",
         surface: "#151A21",
-        "retro-green": "#8BE78B",
+        // Phosphor colour is a CSS variable so the OS can switch "monitor" tint at runtime.
+        "retro-green": "rgb(var(--phosphor) / <alpha-value>)",
         "retro-amber": "#F5B14C",
         "accent-purple": "#A970FF",
         "retro-text": "#F5F1E8",
@@ -23,10 +24,12 @@ const config: Config = {
       boxShadow: {
         glow: "0 0 80px rgba(139,231,139,0.12)",
         card: "0 24px 80px rgba(0,0,0,0.38)",
+        retro: "4px 4px 0 0 rgba(0,0,0,0.55)",
       },
       fontFamily: {
         sans: ["var(--font-geist-sans)", "Inter", "system-ui", "sans-serif"],
         mono: ["var(--font-geist-mono)", "SFMono-Regular", "monospace"],
+        pixel: ["var(--font-pixel)", "var(--font-geist-mono)", "monospace"],
       },
     },
   },

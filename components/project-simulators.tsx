@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { motion } from "framer-motion";
 import { Activity, Brain, Car, CheckCircle2, CircleDollarSign, Database, GitBranch, Inbox, MapPin, Route, Server, Shield, Sparkles } from "lucide-react";
 import { Project } from "@/lib/projects";
 import { cn } from "@/lib/utils";
@@ -24,23 +23,16 @@ export function ArchitectureDiagram({ project }: { project: Project }) {
         {project.architecture.map((node, index) => {
           const Icon = iconMap[index % iconMap.length];
           return (
-            <motion.div
-              key={node}
-              initial={{ opacity: 0, scale: 0.92 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.06 }}
-              className="relative border border-retro-text/10 bg-black/40 p-4"
-            >
+            <div key={node} className="reveal relative border border-retro-text/15 bg-black/40 p-4" style={{ animationDelay: `${index * 50}ms` }}>
               <div className="mb-4 flex size-10 items-center justify-center border border-retro-green/40 bg-retro-green/8">
                 <Icon className="size-5 text-retro-green" />
               </div>
               <p className="text-sm font-medium text-retro-text">{node}</p>
-              <p className="mt-2 text-xs leading-5 text-retro-text/40">Layer {index + 1} in the product system.</p>
+              <p className="mt-1 text-[11px] uppercase tracking-wider text-retro-text/55">Layer {String(index + 1).padStart(2, "0")}</p>
               {index < project.architecture.length - 1 ? (
                 <div className="absolute -right-4 top-1/2 hidden h-px w-4 bg-[#efe7d1]/35 md:block" />
               ) : null}
-            </motion.div>
+            </div>
           );
         })}
       </div>
@@ -84,16 +76,9 @@ export function MemoryTerminal() {
       </div>
       <div className="space-y-2">
         {lines.map((line, index) => (
-          <motion.p
-            key={line}
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: index * 0.16 }}
-            className={line.startsWith("$") ? "text-retro-green" : "text-retro-text/58"}
-          >
+          <p key={line} className={`term-line ${line.startsWith("$") ? "text-retro-green" : "text-retro-text/70"}`} style={{ animationDelay: `${index * 120}ms` }}>
             {line}
-          </motion.p>
+          </p>
         ))}
       </div>
     </div>
@@ -119,12 +104,7 @@ export function RidePhoneSimulator() {
         </div>
         <div className="mt-4 space-y-3">
           {rides.map(([name, price, eta, tag], index) => (
-            <motion.div
-              key={name}
-              animate={{ y: index === 0 ? [0, -3, 0] : 0 }}
-              transition={{ duration: 3, repeat: Infinity }}
-              className={cn("rounded-[8px] border p-3", index === 0 ? "border-mint/40 bg-mint/10" : "border-white/10 bg-white/[0.04]")}
-            >
+            <div key={name} className={cn("rounded-[8px] border p-3", index === 0 ? "border-mint/40 bg-mint/10" : "border-white/10 bg-white/[0.04]")}>
               <div className="flex items-center justify-between">
                 <span className="font-medium text-white">{name}</span>
                 <span className="font-semibold text-white">{price}</span>
@@ -133,7 +113,7 @@ export function RidePhoneSimulator() {
                 <span>{eta} away</span>
                 <span>{tag}</span>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>
@@ -188,14 +168,7 @@ export function ScreenshotGallery({ project }: { project: Project }) {
       <div className="grid gap-8">
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
           {rideCompareFrames.map((frame, index) => (
-            <motion.div
-              key={frame.src}
-              initial={{ opacity: 0, y: 28 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.06 }}
-              className="relative mx-auto w-full max-w-[260px]"
-            >
+            <div key={frame.src} className="reveal relative mx-auto w-full max-w-[260px]" style={{ animationDelay: `${index * 60}ms` }}>
               <Image
                 src={frame.src}
                 alt={frame.alt}
@@ -204,7 +177,7 @@ export function ScreenshotGallery({ project }: { project: Project }) {
                 sizes="(max-width: 640px) 72vw, (max-width: 1024px) 34vw, 19vw"
                 className="h-auto w-full"
               />
-            </motion.div>
+            </div>
           ))}
         </div>
         <div className="grid gap-4 md:grid-cols-3">

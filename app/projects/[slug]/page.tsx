@@ -1,21 +1,19 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight, Code2, Download, ExternalLink, FolderOpen, Github, Lock, Play, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, ExternalLink, FileText, Github, Lock, Play } from "lucide-react";
 import { ArchitectureDiagram, ScreenshotGallery, WorkflowVisualization } from "@/components/project-simulators";
+import { AppTile, PixelIcon } from "@/components/os/pixel-icon";
+import { OsFooter } from "@/components/os/system-effects";
+import { Kicker, OsWindow, Prompt } from "@/components/os/window";
 import { Reveal } from "@/components/reveal";
+import { BulletList } from "@/components/views/ui";
+import { ProjectScreen } from "@/components/views/project-screen";
 import { getProject, projects } from "@/lib/projects";
 
 type Props = {
   params: Promise<{ slug: string }>;
-};
-
-type WindowProps = {
-  title: string;
-  children: ReactNode;
-  className?: string;
 };
 
 export function generateStaticParams() {
@@ -32,14 +30,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     title: project.title,
-    description: project.description,
+    description: project.tagline,
     openGraph: {
       title: `${project.title} | Priyanshu Patel`,
-      description: project.description,
-      images: [project.image],
+      description: project.tagline,
+      images: [project.image ?? "/projects/memory-router.png"],
     },
   };
 }
+
+const hasGallery = new Set(["memory-router", "ridecompare", "ai-lifeadmin-os", "crm-workflow-automation"]);
 
 export default async function ProjectPage({ params }: Props) {
   const { slug } = await params;
@@ -49,207 +49,214 @@ export default async function ProjectPage({ params }: Props) {
     notFound();
   }
 
-  const projectIndex = projects.findIndex((item) => item.slug === project.slug) + 1;
+  const index = projects.findIndex((item) => item.slug === project.slug);
+  const prev = projects[(index - 1 + projects.length) % projects.length];
+  const next = projects[(index + 1) % projects.length];
+  const icon = <PixelIcon name="document" className="size-4 text-retro-green" />;
 
   return (
-    <main className="retro-scanlines min-h-screen px-3 py-3 pb-20 font-mono text-[13px] text-retro-text sm:px-5 sm:py-5">
-      <div className="mx-auto grid max-w-[1600px] gap-5">
-        <Link href="/#projects" className="retro-button inline-flex h-10 w-fit items-center gap-2 px-4 text-xs uppercase">
-          <ArrowLeft className="size-4" /> Back to projects
-        </Link>
+    <div className="min-h-screen font-mono text-[13px] text-retro-text">
+      <div className="crt-overlay" aria-hidden />
+      <header className="os-menubar">
+        <div className="os-menubar-inner mx-auto flex max-w-[1400px] items-center gap-2 px-2 sm:px-4">
+          <Link href="/#projects" className="flex h-9 items-center gap-2 px-2 hover:bg-retro-green/10 lg:h-7">
+            <ArrowLeft className="size-4 text-retro-green" aria-hidden />
+            <span className="font-pixel text-[19px] leading-none">PRIYANSHU OS</span>
+          </Link>
+          <nav aria-label="Breadcrumb" className="hidden min-w-0 text-[12px] text-retro-text/70 sm:block">
+            <ol className="flex items-center gap-2">
+              <li aria-hidden>/</li>
+              <li>
+                <Link href="/#projects" className="hover:text-retro-green">
+                  PROJECTS
+                </Link>
+              </li>
+              <li aria-hidden>/</li>
+              <li aria-current="page" className="truncate text-retro-text">
+                {project.file}
+              </li>
+            </ol>
+          </nav>
+          <span className="ml-auto text-[12px] text-retro-text/65">
+            {String(index + 1).padStart(2, "0")} / {String(projects.length).padStart(2, "0")}
+          </span>
+        </div>
+      </header>
 
-        <RetroWindow title="project.exe">
-          <div className="grid gap-0 lg:grid-cols-[220px_1fr]">
-            <aside className="border-b border-retro-text/10 p-4 lg:border-b-0 lg:border-r">
-              <Prompt command="project_detail" />
-              <div className="mt-8 space-y-2 uppercase">
-                {["Overview", "Features", "Tech Stack", "Demo", "Gallery", "Source Code"].map((item, index) => (
-                  <a
-                    key={item}
-                    href={index === 0 ? "#overview" : index === 4 ? "#gallery" : "#details"}
-                    className={`flex h-10 items-center gap-3 border px-3 text-xs transition ${
-                      index === 0 ? "border-retro-green/40 bg-retro-green/8 text-retro-green" : "border-transparent text-retro-text/50 hover:border-retro-green/20 hover:text-retro-text"
-                    }`}
-                  >
-                    {index === 0 ? <FolderOpen className="size-3.5 text-retro-green" /> : <Code2 className="size-3.5 text-accent-purple/60" />}
-                    {item}
-                  </a>
-                ))}
-              </div>
-            </aside>
-
-            <section id="overview" className="grid gap-8 p-5 md:p-8 xl:grid-cols-[1fr_.95fr]">
-              <Reveal>
-                <div className="flex items-center justify-between gap-3 text-retro-text/40">
-                  <Prompt command={project.slug} />
-                  <span className="text-xs">{String(projectIndex).padStart(2, "0")} / {String(projects.length).padStart(2, "0")}</span>
-                </div>
-                <h1 className="pixel-heading mt-8 text-4xl font-black leading-tight md:text-5xl">{project.title}</h1>
-                <p className="mt-3 text-sm uppercase tracking-[0.14em] text-retro-amber">
-                  {project.type} · {project.status}
-                </p>
-                <p className="mt-5 max-w-3xl text-sm leading-7 text-retro-text/65">{project.description}</p>
-                <div className="mt-6 flex flex-wrap gap-3">
-                  {project.repo ? (
-                    <Link href={project.repo} className="retro-button inline-flex h-10 items-center gap-2 px-4 text-xs uppercase">
-                      <Github className="size-4" /> View Code
-                    </Link>
-                  ) : (
-                    <span className="retro-button inline-flex h-10 items-center gap-2 px-4 text-xs uppercase text-retro-text/40">
-                      <Lock className="size-4" /> Private Repository
-                    </span>
-                  )}
-                  {project.live ? (
-                    <Link href={project.live} className="retro-button inline-flex h-10 items-center gap-2 border-retro-green/40 bg-retro-green/8 px-4 text-xs uppercase text-retro-green">
-                      <ExternalLink className="size-4" /> Live Demo
-                    </Link>
-                  ) : null}
-                  {project.slug === "memory-router" ? (
-                    <Link href="/projects/memory-router/playground" className="retro-button inline-flex h-10 items-center gap-2 border-retro-green/40 bg-retro-green/8 px-4 text-xs uppercase text-retro-green">
-                      <Play className="size-4" /> Try Playground
-                    </Link>
-                  ) : null}
-                  <Link href={project.caseStudy} className="retro-button inline-flex h-10 items-center gap-2 px-4 text-xs uppercase">
-                    <Download className="size-4" /> Case Study
-                  </Link>
-                </div>
-              </Reveal>
-
-              <Reveal delay={0.08}>
-                <div className="retro-panel p-4">
-                  <div className="relative aspect-[16/10] overflow-hidden border border-retro-text/10 bg-black">
-                    <Image src={project.image} alt={`${project.title} cover`} fill sizes="(max-width: 1280px) 100vw, 640px" className="object-cover opacity-85" priority />
-                  </div>
-                  <div className="mt-3 grid grid-cols-2 gap-1.5">
-                    {project.stack.slice(0, 6).map((tech) => (
-                      <span key={tech} className="border border-retro-text/10 bg-black/40 px-2 py-1.5 text-[11px] text-retro-text/55">
-                        {tech}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </Reveal>
-            </section>
+      <main id="main-content" className="mx-auto grid max-w-[1400px] gap-6 px-3 py-4 pb-[calc(24px+var(--safe-bottom))] sm:px-5 sm:py-6">
+        <OsWindow title={project.file} icon={icon} className="reveal">
+          <div className="border-b border-retro-text/10 px-4 py-2 sm:px-6">
+            <Prompt command={`open ${project.slug} --case-file`} className="truncate text-[12px]" />
           </div>
-        </RetroWindow>
+          <div className="grid gap-8 p-4 sm:p-6 lg:p-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)]">
+            <div className="min-w-0">
+              <div className="flex items-start gap-4">
+                <AppTile monogram={project.monogram} accent={project.accent} size="lg" />
+                <div className="min-w-0">
+                  <h1 className="font-sans text-3xl font-bold leading-tight tracking-tight sm:text-4xl">{project.title}</h1>
+                  {project.subtitle ? <p className="text-sm text-retro-text/70">{project.subtitle}</p> : null}
+                  <p className="mt-1 text-[12px] uppercase tracking-[0.14em] text-retro-amber">
+                    {project.type} · {project.status}
+                  </p>
+                </div>
+              </div>
+              <p className="mt-6 text-base leading-7 text-retro-text">{project.tagline}</p>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-retro-text/80">{project.description}</p>
 
-        <RetroWindow title="case-study.exe">
-          <GridSection items={[
-            ["Problem", project.sections.problem],
-            ["Solution", project.sections.solution],
-            ["Business Impact", project.impact.join(" ")],
-            ["Learnings", project.learnings.join(" ")],
-          ]} />
-        </RetroWindow>
+              <div className="mt-6 flex flex-wrap gap-2">
+                {project.live ? (
+                  <Link href={project.live.href} className="os-btn os-btn-primary h-10 px-4 text-[12px] uppercase">
+                    <Play className="size-4" aria-hidden /> {project.live.label}
+                  </Link>
+                ) : null}
+                {project.repo ? (
+                  <a href={project.repo} target="_blank" rel="noreferrer" className="os-btn h-10 px-4 text-[12px] uppercase">
+                    <Github className="size-4" aria-hidden /> View code <ExternalLink className="size-3" aria-hidden />
+                  </a>
+                ) : (
+                  <span className="inline-flex h-10 items-center gap-2 border border-dashed border-retro-text/25 px-4 text-[12px] uppercase text-retro-text/65">
+                    <Lock className="size-4" aria-hidden /> Private repository
+                  </span>
+                )}
+                {project.caseStudy ? (
+                  <a href={project.caseStudy} className="os-btn h-10 px-4 text-[12px] uppercase">
+                    <FileText className="size-4" aria-hidden /> Case study
+                  </a>
+                ) : null}
+              </div>
 
-        <RetroWindow title="architecture.exe">
-          <div className="p-5">
-            <Prompt command="architecture_overview" />
-            <div className="mt-5">
+              <dl className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {project.metrics.map((metric) => (
+                  <div key={metric.label} className="os-panel px-3 py-2">
+                    <dt className="sr-only">{metric.label}</dt>
+                    <dd>
+                      <span className="block font-pixel text-[26px] leading-none text-retro-green">{metric.value}</span>
+                      <span className="mt-1 block text-[11px] leading-4 text-retro-text/65">{metric.label}</span>
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+
+            <div className="min-w-0">
+              <ProjectScreen project={project} />
+              <ul className="mt-3 flex flex-wrap gap-1.5" aria-label="Tech stack">
+                {project.stack.map((tech) => (
+                  <li key={tech} className="os-chip">
+                    {tech}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </OsWindow>
+
+        <OsWindow title="CASE_STUDY.TXT" icon={icon}>
+          <div className="grid gap-4 p-4 sm:p-6 md:grid-cols-2">
+            <Block index="01" label="Problem">
+              <p className="text-sm leading-7 text-retro-text/85">{project.problem}</p>
+            </Block>
+            <Block index="02" label="Solution">
+              <p className="text-sm leading-7 text-retro-text/85">{project.solution}</p>
+            </Block>
+            <Block index="03" label="What I built">
+              <BulletList items={project.built} />
+            </Block>
+            <Block index="04" label="My role">
+              <p className="text-sm leading-7 text-retro-text/85">{project.role}</p>
+            </Block>
+          </div>
+        </OsWindow>
+
+        <section className="grid gap-6 lg:grid-cols-2">
+          <OsWindow title="DECISIONS.LOG" icon={icon}>
+            <div className="p-4 sm:p-6">
+              <Kicker index="05">Key product decisions</Kicker>
+              <BulletList items={project.decisions} className="mt-3" />
+            </div>
+          </OsWindow>
+          <OsWindow title="FEATURES.LST" icon={icon}>
+            <div className="p-4 sm:p-6">
+              <Kicker index="06">Features</Kicker>
+              <BulletList items={project.features} className="mt-3" />
+            </div>
+          </OsWindow>
+        </section>
+
+        <OsWindow title="ARCHITECTURE.SYS" icon={icon}>
+          <div className="p-4 sm:p-6">
+            <Kicker index="07">Architecture</Kicker>
+            <div className="mt-4">
               <ArchitectureDiagram project={project} />
             </div>
           </div>
-        </RetroWindow>
+        </OsWindow>
 
-        <RetroWindow title="gallery.exe">
-          <div id="gallery" className="p-5">
-            <Prompt command="screenshots_and_system_view" />
-            <div className="mt-5">
-              <ScreenshotGallery project={project} />
-            </div>
+        <OsWindow title={hasGallery.has(project.slug) ? "GALLERY.EXE" : "FLOW.EXE"} icon={icon}>
+          <div id="gallery" className="p-4 sm:p-6">
+            <Kicker index="08">{hasGallery.has(project.slug) ? "Screens & system view" : "User flow"}</Kicker>
+            <div className="mt-4">{hasGallery.has(project.slug) ? <ScreenshotGallery project={project} /> : <WorkflowVisualization flows={project.flows} accent={project.accent} />}</div>
           </div>
-        </RetroWindow>
+        </OsWindow>
 
-        <RetroWindow title="flow.exe">
-          <div className="p-5">
-            <Prompt command="user_flow" />
-            <div className="mt-5">
-              <WorkflowVisualization flows={project.flows} accent={project.accent} />
-            </div>
-          </div>
-        </RetroWindow>
+        {project.challenges || project.learnings || project.roadmap ? (
+          <section className="grid gap-6 lg:grid-cols-3">
+            {project.challenges ? (
+              <OsWindow title="CHALLENGES.TXT" icon={icon}>
+                <Reveal className="p-4 sm:p-6">
+                  <Kicker>Challenges</Kicker>
+                  <BulletList items={project.challenges} className="mt-3" />
+                </Reveal>
+              </OsWindow>
+            ) : null}
+            {project.learnings ? (
+              <OsWindow title="LEARNINGS.TXT" icon={icon}>
+                <Reveal className="p-4 sm:p-6">
+                  <Kicker>What I learned</Kicker>
+                  <BulletList items={project.learnings} className="mt-3" />
+                </Reveal>
+              </OsWindow>
+            ) : null}
+            {project.roadmap ? (
+              <OsWindow title="ROADMAP.TXT" icon={icon}>
+                <Reveal className="p-4 sm:p-6">
+                  <Kicker>Roadmap</Kicker>
+                  <BulletList items={project.roadmap} className="mt-3" />
+                </Reveal>
+              </OsWindow>
+            ) : null}
+          </section>
+        ) : null}
 
-        <section id="details" className="grid gap-5 lg:grid-cols-3">
-          <RetroWindow title="features.exe">
-            <ListCard title="Key Features" items={project.features} />
-          </RetroWindow>
-          <RetroWindow title="decisions.exe">
-            <ListCard title="Technical Decisions" items={project.sections.decisions} />
-          </RetroWindow>
-          <RetroWindow title="roadmap.exe">
-            <ListCard title="Future Roadmap" items={project.sections.roadmap} />
-          </RetroWindow>
-        </section>
-
-        <section className="grid gap-5 lg:grid-cols-3">
-          <RetroWindow title="stack.exe">
-            <ListCard title="Tech Stack" items={project.stack} />
-          </RetroWindow>
-          <RetroWindow title="challenges.exe">
-            <ListCard title="Challenges" items={project.challenges} />
-          </RetroWindow>
-          <RetroWindow title="learning.exe">
-            <ListCard title="What I Learned" items={project.learnings} />
-          </RetroWindow>
-        </section>
-
-        <Link href="/#projects" className="retro-button inline-flex h-10 w-fit items-center gap-2 px-4 text-xs uppercase">
-          More projects <ArrowRight className="size-4" />
-        </Link>
-      </div>
-    </main>
-  );
-}
-
-function RetroWindow({ title, children, className }: WindowProps) {
-  return (
-    <section className={`retro-window overflow-hidden ${className ?? ""}`}>
-      <div className="retro-titlebar flex h-8 items-center justify-between px-3 text-xs">
-        <span>{title}</span>
-        <div className="flex items-center gap-1.5">
-          <span className="size-3 rounded-full bg-red-400/70" />
-          <span className="size-3 rounded-full bg-retro-amber/70" />
-          <span className="size-3 rounded-full bg-retro-green/70" />
-        </div>
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function Prompt({ command }: { command: string }) {
-  return (
-    <p className="retro-terminal text-sm">
-      <span className="text-retro-text/40">$</span> {command}
-    </p>
-  );
-}
-
-function GridSection({ items }: { items: [string, string][] }) {
-  return (
-    <div className="grid gap-5 p-5 md:grid-cols-2">
-      {items.map(([label, value]) => (
-        <Reveal key={label} className="retro-panel p-5">
-          <p className="text-[10px] uppercase tracking-[0.18em] text-retro-green">{label}</p>
-          <p className="mt-3 text-sm leading-7 text-retro-text/60">{value}</p>
-        </Reveal>
-      ))}
+        <nav aria-label="More projects" className="grid gap-3 sm:grid-cols-2">
+          <Link href={`/projects/${prev.slug}`} className="os-btn h-auto justify-start gap-3 p-4 text-left">
+            <ArrowLeft className="size-4 shrink-0" aria-hidden />
+            <span className="min-w-0">
+              <span className="block text-[11px] uppercase tracking-wider text-retro-text/60">Previous</span>
+              <span className="block truncate text-sm">{prev.title}</span>
+            </span>
+          </Link>
+          <Link href={`/projects/${next.slug}`} className="os-btn h-auto justify-end gap-3 p-4 text-right">
+            <span className="min-w-0">
+              <span className="block text-[11px] uppercase tracking-wider text-retro-text/60">Next</span>
+              <span className="block truncate text-sm">{next.title}</span>
+            </span>
+            <ArrowRight className="size-4 shrink-0" aria-hidden />
+          </Link>
+        </nav>
+      </main>
+      <OsFooter />
     </div>
   );
 }
 
-function ListCard({ title, items }: { title: string; items: string[] }) {
+function Block({ index, label, children }: { index: string; label: string; children: ReactNode }) {
   return (
-    <Reveal className="p-5">
-      <h3 className="text-lg font-bold text-accent-purple">{title}</h3>
-      <div className="mt-4 space-y-2">
-        {items.map((item) => (
-          <div key={item} className="flex gap-2 text-xs leading-5 text-retro-text/55">
-            <Sparkles className="mt-0.5 size-3 shrink-0 text-retro-green" />
-            {item}
-          </div>
-        ))}
-      </div>
-    </Reveal>
+    <section className="os-panel p-4 sm:p-5">
+      <h2>
+        <Kicker index={index}>{label}</Kicker>
+      </h2>
+      <div className="mt-3">{children}</div>
+    </section>
   );
 }

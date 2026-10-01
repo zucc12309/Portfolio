@@ -1,23 +1,15 @@
-"use client";
-
-import { motion, type HTMLMotionProps } from "framer-motion";
+import type { HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-type RevealProps = HTMLMotionProps<"div"> & {
+type RevealProps = HTMLAttributes<HTMLDivElement> & {
   delay?: number;
 };
 
-export function Reveal({ children, className, delay = 0, ...props }: RevealProps) {
+/** Lightweight CSS fade-up (no JS animation runtime). Respects reduced motion via globals.css. */
+export function Reveal({ children, className, delay = 0, style, ...props }: RevealProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 22, filter: "blur(8px)" }}
-      whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      viewport={{ once: true, margin: "-90px" }}
-      transition={{ duration: 0.75, delay, ease: [0.22, 1, 0.36, 1] }}
-      className={cn(className)}
-      {...props}
-    >
+    <div className={cn("reveal", className)} style={{ animationDelay: `${Math.round(delay * 1000)}ms`, ...style }} {...props}>
       {children}
-    </motion.div>
+    </div>
   );
 }
